@@ -16,6 +16,7 @@ $logFileName = 'Log_' . date('y_m_d') . '.log';
 $log = new Logger('name');
 try {
     $log->pushHandler(new StreamHandler($base . '/logs/' . $logFileName, Logger::INFO));
+    $log->info('====Start job at '.date('y-m-d').'====');
 } catch (Exception $e) {
     echo 'Error open log file';
 }
