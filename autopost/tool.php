@@ -18,24 +18,27 @@ function getHtml($url)
     return $output;
 }
 
-function getPostUrl($output)
+function getPostUrl($output, $url = '')
 {
     $html = str_get_html($output);
-    $main_content = $html->find('#main-content')[0];
-    $item_lists = $main_content->find('.item-list');
-    $item = $item_lists[0];
-    $title = $item->find('.post-box-title')[0];
-    $a = $title->find('a')[0];
-    $url = $a->href;
-    return $url;
+    $main_content = $html->find('div.post-listing')[0];
+    $item_lists = $main_content->find('article.item-list');
+    $urls = [];
+    foreach ($item_lists as $item) {
+        $title = $item->find('h2.post-box-title')[0];
+        $a = $title->find('a')[0];
+        $url = $a->href;
+        $urls[] = $url;
+    }
+    return $urls;
 }
 
-function getImgUrl($output)
+function getImgUrl($output, $index = 0)
 {
     $html = str_get_html($output);
     $main_content = $html->find('#main-content')[0];
     $item_lists = $main_content->find('.item-list');
-    $item = $item_lists[0];
+    $item = $item_lists[$index];
     $thumnail = $item->find('.post-thumbnail')[0];
     $img = $thumnail->find('img')[0];
     $img_url = $img->src;
@@ -50,6 +53,7 @@ function getPost($url)
     $title = $post->find('h1.name')[0];
     $title = $title->plaintext;
     $content = $post->find('div.entry')[0];
+    $content->find('div.share-post')[0]->outertext = '';
     $content = $content->innertext;
     $post = [
         'title' => $title,
@@ -99,30 +103,22 @@ function Generate_Featured_Image($image_url, $token)
 }
 
 
-function checkPostExist($title, $content = '')
+function autopost_add_post($token, $linkCategory, $category)
 {
-    if ($content != '') {
-        $check = post_exists($title, $content);
-    } else {
-        $check = post_exists($title);
-    }
-    return $check;
-
-}
-
-
-function autopost_add_post($token,$linkCategory, $category)
-{
-    $catID = doPost('dangian/v1/getcat',['cat'=>$category],$token);
+    $catID = doPost('dangian/v1/getcat', ['cat' => $category], $token);
     $output = getHtml($linkCategory);
-    $postUrl = getPostUrl($output);
-    $postThumbnailImgUrl = getImgUrl($output);
-    $imgid = Generate_Featured_Image($postThumbnailImgUrl, $token);
-    $post = getPost($postUrl);
-    $post['status'] = 'publish';
-    $post['categories'] = $catID;
-    $post['featured_media'] = $imgid;
-    return $post;
+    $postUrls = getPostUrl($output, $linkCategory);
+    $posts = [];
+    foreach ($postUrls as $index => $postUrl) {
+        $postThumbnailImgUrl = getImgUrl($output, $index);
+        $imgid = Generate_Featured_Image($postThumbnailImgUrl, $token);
+        $post = getPost($postUrl);
+        $post['status'] = 'publish';
+        $post['categories'] = $catID;
+        $post['featured_media'] = $imgid;
+        $posts[] = $post;
+    }
+    return $posts;
 }
 
 /**
@@ -133,27 +129,41 @@ function cg_getPostUrl($output)
 {
     $html = str_get_html($output);
     $main_content = $html->find('div.main_news')[0];
-    $url = $main_content->find('a.view_detail')[0]->href;
-    return $url;
+    $urls = [];
+    foreach ($main_content->find('a.view_detail') as $content) {
+        $url = $content->href;
+        $urls[] = $url;
+    }
+
+    return $urls;
 }
 
-function cg_getThumbnailImg($output)
+function cg_getThumbnailImg($output, $index = 0)
 {
     $html = str_get_html($output);
     $main_content = $html->find('div.main_news')[0];
-    $img = $main_content->find('a.img img')[0]->src;
+    $img = $main_content->find('a.img img')[$index]->src;
     return $img;
 }
 
 function cg_getPost($url)
 {
-    $output = getHtml($url, false);
+    $output = getHtml($url);
     $html = str_get_html($output);
     $main = $html->find('div.nwsdetail')[0];
     $title = $main->find('h3.title')[0]->innertext;
     $img = $main->find('img');
     $main->find('span.time')[0]->innertext = '';
     $main->find('h3.title')[0]->innertext = '';
+    foreach ($main->find('p') as $key => $p) {
+        $plantext = $p->plaintext;
+        if (empty(trim($plantext))) {
+           unset($main->find('p')[$key]);
+        } else {
+            $p->innertext = $plantext;
+        }
+
+    }
     foreach ($img as $key => $i) {
         $href = $i->src;
         $img[$key]->src = 'http://conggiao.info' . $href;
@@ -166,27 +176,35 @@ function cg_getPost($url)
     return $post;
 }
 
-function cg_autopost_add_post($token,$linkCategory, $category)
+function cg_autopost_add_post($token, $linkCategory, $category)
 {
-    $catID = doPost('dangian/v1/getcat',['cat'=>$category],$token);
+    $catID = doPost('dangian/v1/getcat', ['cat' => $category], $token);
     $output = getHtml($linkCategory);
-    $postUrl = cg_getPostUrl($output);
-    $postThumbnailImgUrl = cg_getThumbnailImg($output);
-    $imgid = Generate_Featured_Image($postThumbnailImgUrl, $token);
-    $post = cg_getPost($postUrl);
-    $post['status'] = 'publish';
-    $post['categories'] = $catID;
-    $post['featured_media'] = $imgid;
-    return $post;
+    $postUrls = cg_getPostUrl($output);
+    $posts = [];
+    foreach ($postUrls as $index => $postUrl) {
+        $postThumbnailImgUrl = cg_getThumbnailImg($output, $index);
+        $imgid = Generate_Featured_Image($postThumbnailImgUrl, $token);
+        $post = cg_getPost($postUrl);
+        $post['status'] = 'publish';
+        $post['categories'] = $catID;
+        $post['featured_media'] = $imgid;
+        $posts[] = $post;
+    }
+    return $posts;
 }
 
 function tgp_getPostUrl($categoryUrl)
 {
     $output = getHtml($categoryUrl);
     $html = str_get_html($output);
-    $main_content = $html->find('div.column-1')[0];
-    $a = 'https://tonggiaophanhanoi.org' . $main_content->find('a')[0]->href;
-    return $a;
+    $main_content = $html->find('div.item');
+    $arr = [];
+    foreach ($main_content as $content) {
+        $a = 'https://tonggiaophanhanoi.org' . $content->find('a')[0]->href;
+        $arr[] = $a;
+    }
+    return $arr;
 }
 
 function tgp_getPost($url)
@@ -221,25 +239,46 @@ function tgp_getPost($url)
 
 }
 
-function tgp_autopost_add_post($token,$linkCategory, $category)
+function tgp_getThumbnailImg($output, $postIndex = 0)
 {
-    $catID = doPost('dangian/v1/getcat',['cat'=>$category],$token);
+    $html = str_get_html($output);
+    $main_content = $html->find('div.item-image')[$postIndex];
+    $img = $main_content->find('a img');
+    if (isset($img[0])) {
+        $img = 'https://tonggiaophanhanoi.org' . $img[0]->src;
+        return $img;
+    }
+    return false;
+}
+
+function tgp_autopost_add_post($token, $linkCategory, $category)
+{
+    $catID = doPost('dangian/v1/getcat', ['cat' => $category], $token);
     $output = getHtml($linkCategory);
-    $postUrl = tgp_getPostUrl($linkCategory);
-//    $postThumbnailImgUrl = getThumbnailImg($output);
-//    $imgid = Generate_Featured_Image($postThumbnailImgUrl, $token);
-    $post = tgp_getPost($postUrl);
-    $post['status'] = 'publish';
-    $post['categories'] = $catID;
-    return $post;
+    $postUrls = tgp_getPostUrl($linkCategory);
+    $posts = [];
+    foreach ($postUrls as $index => $postUrl) {
+        $postThumbnailImgUrl = tgp_getThumbnailImg($output, $index);
+        if ($postThumbnailImgUrl) {
+            $imgid = Generate_Featured_Image($postThumbnailImgUrl, $token);
+        } else {
+            $imgid = 2922;
+        }
+        $post = tgp_getPost($postUrl);
+        $post['status'] = 'publish';
+        $post['categories'] = $catID;
+        $post['featured_media'] = $imgid;
+        $posts[] = $post;
+    }
+    return $posts;
 }
 
 function post($token, $post)
 {
-    $exist = doPost('dangian/v1/checkexist',['title'=>$post['title']],$token);
-    if(!$exist){
-        $output = doPost('wp/v2/posts',$post,$token);
-    }else{
+    $exist = doPost('dangian/v1/checkexist', ['title' => $post['title']], $token);
+    if (!$exist) {
+        $output = doPost('wp/v2/posts', $post, $token);
+    } else {
         return -1;
     }
     return $output;
@@ -285,7 +324,7 @@ function validateToken($token)
     }
 }
 
-function refreshToken()
+function refreshToken($username, $password)
 {
     $base = __DIR__;
     if (is_file($base . '/token')) {
@@ -293,22 +332,22 @@ function refreshToken()
         $token = fread($file2, 1000);
         if ($token != '') {
             if (!validateToken($token)) {
-                $file = fopen($base . '/token', 'wb+');
-                $token = getToken('admin', 'Melentroi1508');
+                $file = fopen($base . '/token_' . $username, 'wb+');
+                $token = getToken($username, $password);
                 fwrite($file, $token);
                 return $token;
             } else {
                 return $token;
             }
         } else {
-            $file = fopen($base . '/token', 'wb+');
-            $token = getToken('admin', 'Melentroi1508');
+            $file = fopen($base . '/token_' . $username, 'wb+');
+            $token = getToken($username, $password);
             fwrite($file, $token);
             return $token;
         }
     } else {
-        $file = fopen($base . '/token', 'wb+');
-        $token = getToken('admin', 'Melentroi1508');
+        $file = fopen($base . '/token_' . $username, 'wb+');
+        $token = getToken($username, $password);
         fwrite($file, $token);
         return $token;
     }
@@ -316,9 +355,10 @@ function refreshToken()
 
 }
 
-function doPost($url,$param,$token){
+function doPost($url, $param, $token)
+{
     $base = 'http://gxdangian.org/wp-json/';
-    $url = $base.$url;
+    $url = $base . $url;
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);

@@ -1,5 +1,8 @@
 {
     "require": {
-        "monolog/monolog": "^1.23"
+        "monolog/monolog": "^1.23",
+      "ext-curl": "*",
+      "ext-fileinfo": "*",
+      "ext-json": "*"
     }
 }
