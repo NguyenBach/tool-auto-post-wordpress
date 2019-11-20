@@ -21,45 +21,45 @@ try {
     echo 'Error open log file';
 }
 
-//$token = refreshToken('dongten.net', 'KZ9xVz)%@9^pSmpeKGw%SDv^');
-//
-//$p = autopost_add_post($token, 'https://dongten.net/category/cau-nguyen/loi-chua-cho-ngay-song/', "	Lời Chúa cho ngày sống");
-//$post = post($token, $p[0]);
-//if ($post == -1) {
-//    $log->error($p[0]['title'] . ' is exist');
-//} else {
-//    $post = json_decode($post, true);
-//    $log->info($post['title']["raw"]);
-//}
-//
-//$p = autopost_add_post($token, 'https://dongten.net/category/ve-dong-ten/cac-thanh/', "Hạnh các Thánh");
-//$post = post($token, $p[0]);
-//if ($post == -1) {
-//    $log->error($p[0]['title'] . ' is exist');
-//} else {
-//    $post = json_decode($post, true);
-//    $log->info($post['title']["raw"]);
-//}
-//$posts = autopost_add_post($token, 'https://dongten.net/category/hoc-lam-nguoi/', "Học làm người");
-//foreach ($posts as $p) {
-//    $post = post($token, $p);
-//    if ($post == -1) {
-//        $log->error($p['title'] . ' is exist');
-//    } else {
-//        $post = json_decode($post, true);
-//        $log->info($post['title']["raw"]);
-//    }
-//}
-//$posts = autopost_add_post($token, 'https://dongten.net/category/hoc-lam-nguoi/le-song/', "Lẽ sống");
-//foreach ($posts as $p) {
-//    $post = post($token, $p);
-//    if ($post == -1) {
-//        $log->error($p['title'] . ' is exist');
-//    } else {
-//        $post = json_decode($post, true);
-//        $log->info($post['title']["raw"]);
-//    }
-//}
+$token = refreshToken('dongten.net', 'KZ9xVz)%@9^pSmpeKGw%SDv^');
+
+$p = autopost_add_post($token, 'https://dongten.net/category/cau-nguyen/loi-chua-cho-ngay-song/', "	Lời Chúa cho ngày sống");
+$post = post($token, $p[0]);
+if ($post == -1) {
+    $log->error($p[0]['title'] . ' is exist');
+} else {
+    $post = json_decode($post, true);
+    $log->info($post['title']["raw"]);
+}
+
+$p = autopost_add_post($token, 'https://dongten.net/category/ve-dong-ten/cac-thanh/', "Hạnh các Thánh");
+$post = post($token, $p[0]);
+if ($post == -1) {
+    $log->error($p[0]['title'] . ' is exist');
+} else {
+    $post = json_decode($post, true);
+    $log->info($post['title']["raw"]);
+}
+$posts = autopost_add_post($token, 'https://dongten.net/category/hoc-lam-nguoi/', "Học làm người");
+foreach ($posts as $p) {
+    $post = post($token, $p);
+    if ($post == -1) {
+        $log->error($p['title'] . ' is exist');
+    } else {
+        $post = json_decode($post, true);
+        $log->info($post['title']["raw"]);
+    }
+}
+$posts = autopost_add_post($token, 'https://dongten.net/category/hoc-lam-nguoi/le-song/', "Lẽ sống");
+foreach ($posts as $p) {
+    $post = post($token, $p);
+    if ($post == -1) {
+        $log->error($p['title'] . ' is exist');
+    } else {
+        $post = json_decode($post, true);
+        $log->info($post['title']["raw"]);
+    }
+}
 
 /// conggiao.info
 
@@ -74,46 +74,46 @@ foreach ($posts as $p) {
         $log->info($post['title']["raw"]);
     }
 }
-//$posts = cg_autopost_add_post($token, 'http://conggiao.info/vatican-n-809', 'Vatican');
-//foreach ($posts as $p) {
-//    $post = post($token, $p);
-//    if ($post == -1) {
-//        $log->error($p['title'] . ' is exist');
-//    } else {
-//        $post = json_decode($post, true);
-//        $log->info($post['title']["raw"]);
-//    }
-//}
-//$posts = cg_autopost_add_post($token, 'http://conggiao.info/hoan-vu-n-810', 'Tin Giáo Hội hoàn vũ');
-//foreach ($posts as $p) {
-//    $post = post($token, $p);
-//    if ($post == -1) {
-//        $log->error($p['title'] . ' is exist');
-//    } else {
-//        $post = json_decode($post, true);
-//        $log->info($post['title']["raw"]);
-//    }
-//}
-//
-/////Tong giao phan ha noi
-//$token = refreshToken('tonggiaophanhanoi.org', 'bmn#P8iT2mCt)Ao&lBL%cnY6');
-//$posts = tgp_autopost_add_post($token, 'https://tonggiaophanhanoi.org/tin-tuc/tin-giao-phan/228-tin-tong-hop', 'Tin Giáo Phận Hà Nội');
-//$p = $posts[0];
-//$post = post($token, $p);
-//if ($post == -1) {
-//    $log->error($p[0]['title'] . ' is exist');
-//} else {
-//    $post = json_decode($post, true);
-//    $log->info($post['title']["raw"]);
-//}
-//
-//$posts = tgp_autopost_add_post($token, 'https://tonggiaophanhanoi.org/tin-tuc/tin-giao-phan/', 'Tin Giáo Phận Hà Nội');
-//foreach ($posts as $p) {
-//    $post = post($token, $p);
-//    if ($post == -1) {
-//        $log->error($p['title'] . ' is exist');
-//    } else {
-//        $post = json_decode($post, true);
-//        $log->info($post['title']["raw"]);
-//    }
-//}
+$posts = cg_autopost_add_post($token, 'http://conggiao.info/vatican-n-809', 'Vatican');
+foreach ($posts as $p) {
+    $post = post($token, $p);
+    if ($post == -1) {
+        $log->error($p['title'] . ' is exist');
+    } else {
+        $post = json_decode($post, true);
+        $log->info($post['title']["raw"]);
+    }
+}
+$posts = cg_autopost_add_post($token, 'http://conggiao.info/hoan-vu-n-810', 'Tin Giáo Hội hoàn vũ');
+foreach ($posts as $p) {
+    $post = post($token, $p);
+    if ($post == -1) {
+        $log->error($p['title'] . ' is exist');
+    } else {
+        $post = json_decode($post, true);
+        $log->info($post['title']["raw"]);
+    }
+}
+
+///Tong giao phan ha noi
+$token = refreshToken('tonggiaophanhanoi.org', 'bmn#P8iT2mCt)Ao&lBL%cnY6');
+$posts = tgp_autopost_add_post($token, 'https://tonggiaophanhanoi.org/tin-tuc/tin-giao-phan/228-tin-tong-hop', 'Tin Giáo Phận Hà Nội');
+$p = $posts[0];
+$post = post($token, $p);
+if ($post == -1) {
+    $log->error($p[0]['title'] . ' is exist');
+} else {
+    $post = json_decode($post, true);
+    $log->info($post['title']["raw"]);
+}
+
+$posts = tgp_autopost_add_post($token, 'https://tonggiaophanhanoi.org/tin-tuc/tin-giao-phan/', 'Tin Giáo Phận Hà Nội');
+foreach ($posts as $p) {
+    $post = post($token, $p);
+    if ($post == -1) {
+        $log->error($p['title'] . ' is exist');
+    } else {
+        $post = json_decode($post, true);
+        $log->info($post['title']["raw"]);
+    }
+}
