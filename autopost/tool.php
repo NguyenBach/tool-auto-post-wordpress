@@ -65,7 +65,7 @@ function getPost($url)
 
 function upload_image($path, $token)
 {
-    $request_url = 'http://gxdangian.org/wp-json/wp/v2/media';
+    $request_url = 'https://gxdangian.org/wp-json/wp/v2/media';
 
     $image = file_get_contents($path);
     $filename = basename($path);
@@ -286,7 +286,7 @@ function post($token, $post)
 
 function getToken($username, $password)
 {
-    $url = 'http://gxdangian.org/wp-json/jwt-auth/v1/token';
+    $url = 'https://gxdangian.org/wp-json/jwt-auth/v1/token';
 
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
@@ -306,7 +306,7 @@ function getToken($username, $password)
 
 function validateToken($token)
 {
-    $url = 'http://gxdangian.org/wp-json/jwt-auth/v1/token/validate';
+    $url = 'https://gxdangian.org/wp-json/jwt-auth/v1/token/validate';
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
@@ -357,7 +357,7 @@ function refreshToken($username, $password)
 
 function doPost($url, $param, $token)
 {
-    $base = 'http://gxdangian.org/wp-json/';
+    $base = 'https://gxdangian.org/wp-json/';
     $url = $base . $url;
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
