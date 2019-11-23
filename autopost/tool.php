@@ -5,8 +5,23 @@
  * Date: 11/07/2017
  * Time: 08:25
  */
+require_once 'vendor/autoload.php';
 require_once 'simple_html_dom.php';
 
+use Monolog\Handler\StreamHandler;
+use Monolog\Logger;
+
+$base = dirname(__FILE__);
+$logFileName = 'Log_' . date('y_m_d') . '.log';
+global $log;
+$log = new Logger('name');
+try {
+
+    $log->pushHandler(new StreamHandler($base . '/logs/' . $logFileName, Logger::INFO));
+    $log->info('====Start job at ' . date('y-m-d') . '====');
+} catch (Exception $e) {
+    echo 'Error open log file';
+}
 
 function getHtml($url)
 {
@@ -96,7 +111,9 @@ function upload_image($path, $token)
 
 function Generate_Featured_Image($image_url, $token)
 {
+    global $log;
     $result = upload_image($image_url, $token);
+    $log->info('upload thumbnail: ' . $result);
     $result = json_decode($result, true);
     return $result['id'];
 
@@ -158,7 +175,7 @@ function cg_getPost($url)
     foreach ($main->find('p') as $key => $p) {
         $plantext = $p->plaintext;
         if (empty(trim($plantext))) {
-           unset($main->find('p')[$key]);
+            unset($main->find('p')[$key]);
         } else {
             $p->innertext = $plantext;
         }
@@ -178,18 +195,31 @@ function cg_getPost($url)
 
 function cg_autopost_add_post($token, $linkCategory, $category)
 {
+    global $log;
     $catID = doPost('dangian/v1/getcat', ['cat' => $category], $token);
     $output = getHtml($linkCategory);
     $postUrls = cg_getPostUrl($output);
     $posts = [];
     foreach ($postUrls as $index => $postUrl) {
-        $postThumbnailImgUrl = cg_getThumbnailImg($output, $index);
-        $imgid = Generate_Featured_Image($postThumbnailImgUrl, $token);
         $post = cg_getPost($postUrl);
-        $post['status'] = 'publish';
-        $post['categories'] = $catID;
-        $post['featured_media'] = $imgid;
-        $posts[] = $post;
+        $log->info('================');
+        $log->info("crawl " . $post['title']);
+        $exist = checkPostExist($token, $post['title']);
+        if (!$exist) {
+            $postThumbnailImgUrl = cg_getThumbnailImg($output, $index);
+            $imgid = Generate_Featured_Image($postThumbnailImgUrl, $token);
+            $post['status'] = 'publish';
+            $post['categories'] = $catID;
+            $post['featured_media'] = $imgid;
+            $up = post($token, $post);
+            $log->info('post: ' . $up);
+            $log->info('result: ok');
+            $log->info('================');
+        } else {
+            $log->info('result: existed');
+            $log->info('================');
+        }
+        break;
     }
     return $posts;
 }
@@ -273,14 +303,21 @@ function tgp_autopost_add_post($token, $linkCategory, $category)
     return $posts;
 }
 
+function checkPostExist($token, $postTitle)
+{
+    $exist = doPost('dangian/v1/checkexist', ['title' => $postTitle], $token);
+    return $exist;
+}
+
 function post($token, $post)
 {
-    $exist = doPost('dangian/v1/checkexist', ['title' => $post['title']], $token);
-    if (!$exist) {
-        $output = doPost('wp/v2/posts', $post, $token);
-    } else {
-        return -1;
-    }
+//    $exist = doPost('dangian/v1/checkexist', ['title' => $post['title']], $token);
+//    if (!$exist) {
+    $output = doPost('wp/v2/posts', $post, $token);
+//    } else {
+//        return -1;
+//    }
+
     return $output;
 }
 
@@ -368,6 +405,7 @@ function doPost($url, $param, $token)
         'Authorization: Bearer ' . $token,
     ));
     curl_setopt($ch, CURLOPT_POSTFIELDS, $param);
+    var_dump($param);
     $output = curl_exec($ch);
     curl_close($ch);
     return $output;
