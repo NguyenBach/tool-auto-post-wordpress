@@ -80,7 +80,7 @@ function getPost($url)
 
 function upload_image($path, $token)
 {
-    $request_url = 'https://gxdangian.org/wp-json/wp/v2/media';
+    $request_url = 'http://gxdangian.org/wp-json/wp/v2/media';
 
     $image = file_get_contents($path);
     $filename = basename($path);
@@ -115,7 +115,10 @@ function Generate_Featured_Image($image_url, $token)
     $result = upload_image($image_url, $token);
     $log->info('upload thumbnail: ' . $result);
     $result = json_decode($result, true);
-    return $result['id'];
+    if (isset($result['id'])) {
+        return $result['id'];
+    }
+    return 0;
 
 }
 
@@ -128,11 +131,11 @@ function autopost_add_post($token, $linkCategory, $category)
     $posts = [];
     foreach ($postUrls as $index => $postUrl) {
         $postThumbnailImgUrl = getImgUrl($output, $index);
-        $imgid = Generate_Featured_Image($postThumbnailImgUrl, $token);
         $post = getPost($postUrl);
         $post['status'] = 'publish';
         $post['categories'] = $catID;
-        $post['featured_media'] = $imgid;
+        $post['thumbnail_url'] = $postThumbnailImgUrl;
+        post($token, $post);
         $posts[] = $post;
     }
     return $posts;
@@ -202,24 +205,12 @@ function cg_autopost_add_post($token, $linkCategory, $category)
     $posts = [];
     foreach ($postUrls as $index => $postUrl) {
         $post = cg_getPost($postUrl);
-        $log->info('================');
-        $log->info("crawl " . $post['title']);
-        $exist = checkPostExist($token, $post['title']);
-        if (!$exist) {
-            $postThumbnailImgUrl = cg_getThumbnailImg($output, $index);
-            $imgid = Generate_Featured_Image($postThumbnailImgUrl, $token);
-            $post['status'] = 'publish';
-            $post['categories'] = $catID;
-            $post['featured_media'] = $imgid;
-            $up = post($token, $post);
-            $log->info('post: ' . $up);
-            $log->info('result: ok');
-            $log->info('================');
-        } else {
-            $log->info('result: existed');
-            $log->info('================');
-        }
-        break;
+        $postThumbnailImgUrl = cg_getThumbnailImg($output, $index);
+        $post['status'] = 'publish';
+        $post['categories'] = $catID;
+        $post['thumbnail_url'] = $postThumbnailImgUrl;
+        post($token, $post);
+        $posts[] = $post;
     }
     return $posts;
 }
@@ -289,15 +280,11 @@ function tgp_autopost_add_post($token, $linkCategory, $category)
     $posts = [];
     foreach ($postUrls as $index => $postUrl) {
         $postThumbnailImgUrl = tgp_getThumbnailImg($output, $index);
-        if ($postThumbnailImgUrl) {
-            $imgid = Generate_Featured_Image($postThumbnailImgUrl, $token);
-        } else {
-            $imgid = 2922;
-        }
         $post = tgp_getPost($postUrl);
         $post['status'] = 'publish';
         $post['categories'] = $catID;
-        $post['featured_media'] = $imgid;
+        $post['thumbnail_url'] = $postThumbnailImgUrl;
+        post($token, $post);
         $posts[] = $post;
     }
     return $posts;
@@ -311,19 +298,36 @@ function checkPostExist($token, $postTitle)
 
 function post($token, $post)
 {
-//    $exist = doPost('dangian/v1/checkexist', ['title' => $post['title']], $token);
-//    if (!$exist) {
-    $output = doPost('wp/v2/posts', $post, $token);
-//    } else {
-//        return -1;
-//    }
+    global $log;
+    $output = '';
+    $log->info('================');
+    $log->info("crawl " . $post['title']);
+    $exist = checkPostExist($token, $post['title']);
+    if (!$exist) {
+        if (isset($post['thumbnail_url'])) {
+            $imgid = Generate_Featured_Image($post['thumbnail_url'], $token);
+            if ($imgid == 0) {
+                $imgid = 6438;
+            }
+        } else {
 
+            $imgid = 6438;
+        }
+        unset($post['thumbnail_url']);
+        $post['featured_media'] = (string)$imgid;
+        $output = doPost('wp/v2/posts', $post, $token);
+        $log->info('post: ' . $output);
+        $log->info('================');
+    } else {
+        $log->info('result: existed');
+        $log->info('================');
+    }
     return $output;
 }
 
 function getToken($username, $password)
 {
-    $url = 'https://gxdangian.org/wp-json/jwt-auth/v1/token';
+    $url = 'http://gxdangian.org/wp-json/jwt-auth/v1/token';
 
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
@@ -343,7 +347,7 @@ function getToken($username, $password)
 
 function validateToken($token)
 {
-    $url = 'https://gxdangian.org/wp-json/jwt-auth/v1/token/validate';
+    $url = 'http://gxdangian.org/wp-json/jwt-auth/v1/token/validate';
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
@@ -394,7 +398,8 @@ function refreshToken($username, $password)
 
 function doPost($url, $param, $token)
 {
-    $base = 'https://gxdangian.org/wp-json/';
+    global $log;
+    $base = 'http://gxdangian.org/wp-json/';
     $url = $base . $url;
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
@@ -405,7 +410,7 @@ function doPost($url, $param, $token)
         'Authorization: Bearer ' . $token,
     ));
     curl_setopt($ch, CURLOPT_POSTFIELDS, $param);
-    var_dump($param);
+    $log->info('param:' . json_encode($param));
     $output = curl_exec($ch);
     curl_close($ch);
     return $output;
